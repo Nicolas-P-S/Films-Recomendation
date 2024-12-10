@@ -7,22 +7,25 @@ def save_user(usuario, senha):
     
     cursor.execute("create table if not exists usuarios(id integer primary key autoincrement, nome text not null, senha text not null)")
     cursor.execute("insert into usuarios (nome, senha) values (?, ?)", (usuario, senha)) #uso de placeholders(?) para evitar sql injection
+    id = cursor.lastrowid
     conn.commit()
     conn.close()
+    
+    return id, usuario, senha
 
 def search_user(usuario):
     try:
         conn = sqlite3.connect("login.db")
         cursor = conn.cursor()
-        cursor.execute("select nome, senha from usuarios where nome = ?", (usuario,))
+        cursor.execute("select id, nome, senha from usuarios where nome = ?", (usuario,))
         retorno = cursor.fetchone()
         if retorno:
-            return retorno  #tupla (usuario, senha)
+            return retorno  #tupla (id, usuario, senha)
         else:
-            return None, None
+            return None, None, None
     except sqlite3.Error as erro:
         print(f"Erro no banco de dados: {erro}")
-        return None, None
+        return None, None, None
 
 
 
@@ -46,19 +49,18 @@ def register():
 
     print("Usuario criado com sucesso!","\nusuario:", usuario,"\nsenha:", senha)
     input()
-    save_user(usuario, senha)
-    return usuario, senha
+    return save_user(usuario, senha)
 
 def login():
     if not os.path.exists("login.db"):
         input("ERRO: NÃO EXISTEM USUARIOS CADASTRADOS NA DATABASE!")
-        return None, None
+        return None, None, None
     
     while True:
         os.system("cls")
         print("Login\n")
         usuario = input("user: ")
-        usuario_search, senha_search = search_user(usuario)
+        id, usuario_search, senha_search = search_user(usuario)
 
         if not usuario_search:
             input("Usuario invalido! Pressione Enter para tentar novamente.")
@@ -72,7 +74,7 @@ def login():
         if senha == senha_search:
             os.system("cls")
             print(f"Bem-vindo de volta, {usuario}!")
-            return usuario, senha
+            return id, usuario, senha
         else:
             input("Senha incorreta! Pressione Enter para tentar novamente.")
 
@@ -88,18 +90,18 @@ def menu():
     match escolha:
         case 1:
             os.system("cls")
-            usuario, senha = register()
+            id, usuario, senha = register()
             if usuario is None or senha is None:
                 return menu()
             else:
-                return usuario, senha
+                return id, usuario, senha
         case 2:
             os.system("cls")
-            usuario, senha = login()
+            id, usuario, senha = login()
             if usuario is None or senha is None:
                 return menu()
             else:
-                return usuario, senha
+                return id, usuario, senha
         case _:
             input("Opção inválida! Pressione Enter para tentar novamente.")
             return menu()
