@@ -5,8 +5,8 @@ def save_user(usuario, senha):
     conn = sqlite3.connect("login.db")
     cursor = conn.cursor()
     
-    cursor.execute("create table if not exists usuarios(id integer primary key autoincrement, nome text not null, senha text not null)")
-    cursor.execute("insert into usuarios (nome, senha) values (?, ?)", (usuario, senha)) #uso de placeholders(?) para evitar sql injection
+    cursor.execute("create table if not exists user(id integer primary key autoincrement, name text not null, password text not null)")
+    cursor.execute("insert into user (name, password) values (?, ?)", (usuario, senha)) #uso de placeholders(?) para evitar sql injection
     id = cursor.lastrowid
     conn.commit()
     conn.close()
@@ -17,7 +17,7 @@ def search_user(usuario):
     try:
         conn = sqlite3.connect("login.db")
         cursor = conn.cursor()
-        cursor.execute("select id, nome, senha from usuarios where nome = ?", (usuario,))
+        cursor.execute("select id, name, password from user where name = ?", (usuario,))
         retorno = cursor.fetchone()
         if retorno:
             return retorno  #tupla (id, usuario, senha)
