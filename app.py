@@ -4,6 +4,9 @@ import login
 import os
 import sqlite3
 
+def pause():
+    input("Pressione qualquer tecla para continuar!")
+
 def pesquisar_filmes(nome_filme, limite=15):
     """
     Pesquisa filmes pelo nome parcial ou similar.
@@ -35,10 +38,10 @@ def save_film(user_id, titulo, genero):
 
 def favoritar_filme(user_id):
     #Selecionar filmes favoritos
-    print("\nPesquise e escolha seus filmes favoritos!")
     filmes_favoritos = []
 
     while True:
+        print("\nPesquise e escolha seus filmes favoritos!")
         nome_filme = input("\nDigite o nome do filme para pesquisar (ou 'sair' para finalizar): ")
         if nome_filme.lower() == "sair":
             break
@@ -46,6 +49,7 @@ def favoritar_filme(user_id):
         # Buscar filmes no dataframe
         resultados = pesquisar_filmes(nome_filme)
 
+        os.system("cls")
         if resultados:
             print("\nFilmes encontrados:")
             for filme in resultados:
@@ -65,19 +69,33 @@ def favoritar_filme(user_id):
                     print("ID inválido ou nenhum filme encontrado com esse ID.")
             else:
                 print("Entrada inválida. Por favor, insira um número.")
+            os.system("cls")
         else:
             print("Nenhum filme encontrado com esse nome ou similaridade.")
 
+def qtd_favorite_films():
+    conn = sqlite3.connect("login.db")
+    cursor = conn.cursor()
+    
+    cursor.execute("select * from films where user_id = ?", (id,))
+    retorno=cursor.fetchall()
+    
+    if retorno:
+        return len(retorno)
+    else:
+        return 0
+    
 def info_conta(id, usuario, senha):
     print("[!]Id:",id)
     print("[!]usuario:",usuario)
     print("[!]senha:",senha)
-    print("[!]quantidade de filmes favoritados:")
-    input("\nPressione Enter para continuar...")
+    print("[!]quantidade de filmes favoritados:",qtd_favorite_films(),"\n")
+    pause()
 
 def print_favorites_films(user_id):
     if not os.path.exists("login.db"):
-        input("Não existem filmes favoritados pelo usuario!")
+        print("Não existem filmes favoritados pelo usuario!\n")
+        pause()
         return 
         
     conn = sqlite3.connect("login.db")
@@ -94,11 +112,13 @@ def print_favorites_films(user_id):
             print(f"[!]Filme nº{c}:")
             print(f"-titulo: {filme[0]}")
             print(f"-genero: {filme[1]}\n")
-        input()
+        pause()
     else:
-        input("Não existem filmes favoritados pelo usuario!")
+        input("Não existem filmes favoritados pelo usuario!\n")
+        pause()
 
-def menu_principal(): 
+def menu_principal():
+    global id, usuario, senha
     while True:
         os.system("cls")
         print("[!] Escolha uma opção:\n")
@@ -121,9 +141,10 @@ def menu_principal():
             case 4:
                 pass
             case 5:
-                pass
+                id, usuario, senha=login.menu()
             case 6:
-                input(f"Até a proxima, {usuario}!")
+                input(f"Até a proxima, {usuario}!\n")
+                pause()
                 break
             case _:
                 pass
@@ -134,6 +155,7 @@ df_movies = pd.read_csv("ml-latest-small/movies.csv")
 df_ratings = pd.read_csv("ml-latest-small/ratings.csv")
 df_tags = pd.read_csv("ml-latest-small/tags.csv")
 
+global id, usuario, senha
 id, usuario, senha=login.menu()
 
 menu_principal()

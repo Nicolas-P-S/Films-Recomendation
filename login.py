@@ -1,6 +1,9 @@
 import os
 import sqlite3
 
+def pause():
+    input("Pressione qualquer tecla para continuar!")
+
 def save_user(usuario, senha):
     conn = sqlite3.connect("login.db")
     cursor = conn.cursor()
@@ -37,23 +40,26 @@ def register():
         print("REGISTER\n")
         usuario=input("user: ")
         if len(usuario) <= 3 or len(usuario) >= 10:
-            input("ERRO: usuario deve ter entre 3 e 10 caracteres!")
+            print("ERRO: usuario deve ter entre 3 e 10 caracteres!\n")
+            pause()
         os.system("cls")
 
     while len(senha) < 3 or len(senha) > 21:
         print("REGISTER\n")
         senha=input("password: ")
         if len(senha) < 3 or len(senha) > 21:
-            input("ERRO: senha deve ter entre 4 e 20 caracteres!")
+            print("ERRO: senha deve ter entre 4 e 20 caracteres!\n")
+            pause()
         os.system("cls")
 
-    print("Usuario criado com sucesso!","\nusuario:", usuario,"\nsenha:", senha)
-    input()
+    print("Usuario criado com sucesso!","\nusuario:", usuario,"\nsenha:", senha,"\n")
+    pause()
     return save_user(usuario, senha)
 
 def login():
     if not os.path.exists("login.db"):
-        input("ERRO: NÃO EXISTEM USUARIOS CADASTRADOS NA DATABASE!")
+        print("ERRO: NÃO EXISTEM USUARIOS CADASTRADOS NA DATABASE!\n")
+        pause()
         return None, None, None
     
     while True:
@@ -63,7 +69,8 @@ def login():
         id, usuario_search, senha_search = search_user(usuario)
 
         if not usuario_search:
-            input("Usuario invalido! Pressione Enter para tentar novamente.")
+            print("Usuario invalido! Pressione Enter para tentar novamente.\n")
+            pause()
         else:
             break;
 
@@ -76,7 +83,8 @@ def login():
             print(f"Bem-vindo de volta, {usuario}!")
             return id, usuario, senha
         else:
-            input("Senha incorreta! Pressione Enter para tentar novamente.")
+            print("Senha incorreta! Pressione Enter para tentar novamente.\n")
+            pause()
 
 def menu():
     os.system("cls")
@@ -84,7 +92,8 @@ def menu():
     try:
         escolha = int(input("\nEscolha a opção:\nRegister-1\nLogin-2\n\nin: "))
     except ValueError:
-        input("Entrada inválida! Pressione Enter para tentar novamente.")
+        print("Entrada inválida! Pressione Enter para tentar novamente.\n")
+        pause()
         return menu()
 
     match escolha:
@@ -103,5 +112,6 @@ def menu():
             else:
                 return id, usuario, senha
         case _:
-            input("Opção inválida! Pressione Enter para tentar novamente.")
+            print("Opção inválida! Pressione Enter para tentar novamente.\n")
+            pause()
             return menu()
