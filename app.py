@@ -1,8 +1,30 @@
-import pandas as pd
 from difflib import get_close_matches
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import pandas as pd
 import login
 import os
 import sqlite3
+
+def training():
+    df_main=pd.merge(df_movies, df_ratings, on="movieId", how="inner")
+    df_main=pd.merge(df_main, df_tags, on=["movieId", "userId"], how="left")
+    df_main = df_main.groupby(["movieId", "title", "genres"]).agg({
+        "userId": lambda x: ", ".join(map(str, x)),      # Juntar todos os userId
+        "tag": lambda x: ", ".join(filter(lambda t: t is not np.nan and str(t).lower() != "nan", x)),  # Juntar tags sem 'nan'
+        "rating": lambda x: ", ".join(map(str, x))
+    }).reset_index()
+    df_main['infos'] = df_main["genres"].astype(str) + " " + df_main["tag"].astype(str)
+    return df_main
+
+def recomendar_filmes_ml(titulo):
+    vectorizer = TfidfVectorizer()
+    Tfidf = vectorizer.fit_transform(df_main["infos"])
+    similarity = cosine_similarity(Tfidf)
+    df_sim=pd.DataFrame(similarity, columns=df_main['title'], index=df_main['title'])
+    teste=pd.DataFrame(df_sim[titulo].sort_values(ascending=False))
+    print(teste.head())
 
 def pause():
     input("Pressione qualquer tecla para continuar!")
@@ -128,26 +150,27 @@ def menu_principal():
         print("[4]: Recomendar filmes")
         print("[5]: Mudar usuário")
         print("[6]: Sair")
-        escolha = int(input("=> "))
+        escolha = input("=> ")
         os.system("cls")
         
         match escolha:
-            case 1:
+            case "1":
                 favoritar_filme(id)
-            case 2:
+            case "2":
                 print_favorites_films(id)
-            case 3:
+            case "3":
                 info_conta(id, usuario, senha)
-            case 4:
-                pass
-            case 5:
+            case "4":
+                recomendar_filmes_ml("Lord of the Rings, The (1978)")
+                pause()
+            case "5":
                 id, usuario, senha=login.menu()
-            case 6:
+            case "6":
                 input(f"Até a proxima, {usuario}!\n")
                 pause()
                 break
             case _:
-                pass
+                input("Tecla inválida!")
 
 # Carregar os dados
 df_links = pd.read_csv("ml-latest-small/links.csv")
@@ -157,5 +180,6 @@ df_tags = pd.read_csv("ml-latest-small/tags.csv")
 
 global id, usuario, senha
 id, usuario, senha=login.menu()
+df_main=training()
 
 menu_principal()
