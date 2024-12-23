@@ -83,7 +83,7 @@ def login():
             print(f"Bem-vindo de volta, {usuario}!")
             return id, usuario, senha
         else:
-            print("Senha incorreta! Pressione Enter para tentar novamente.\n")
+            print("Senha incorreta!\n")
             pause()
 
 def menu():
@@ -92,7 +92,8 @@ def menu():
     try:
         escolha = int(input("\nEscolha a opção:\nRegister-1\nLogin-2\n\nin: "))
     except ValueError:
-        print("Entrada inválida! Pressione Enter para tentar novamente.\n")
+        os.system("cls")
+        print("Entrada inválida!\n")
         pause()
         return menu()
 
