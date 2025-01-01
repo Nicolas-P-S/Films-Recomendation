@@ -20,45 +20,44 @@ def training():
 
 def recomendar_filmes_ml():
     while True:
-        conn = sqlite3.connect("login.db")
-        cursor = conn.cursor()
-
+        os.system("cls")
         print_favorites_films()
-        title = input("\nDigite o nome do filme para basear as recomendações: ")
-        
+        movie_id = input("\nDigite o id do filme para basear as recomendações: ")
+        os.system("cls")
+
         try:
-            cursor.execute("SELECT * FROM films WHERE user_id = ? AND title = ?", (id, title))
+            conn = sqlite3.connect("login.db")
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM films WHERE user_id = ? AND movie_id = ?", (id, movie_id))
             result = cursor.fetchone()
+
             if not result:
-                raise ValueError("Filme não encontrado.")
-            
-            filme_titulo = result[1]
-            os.system("cls")
+                raise ValueError("Filme não encontrado nos favoritos.")
+
+            filme_titulo = result[2]
             break
         except ValueError as ve:
             print(f"ERRO: {ve}")
             pause()
-        except Exception as e:
+        except Exception:
             print("ERRO: FILME INVÁLIDO!")
             pause()
-    
+
+    # Calcular as recomendações
     vectorizer = TfidfVectorizer()
     Tfidf = vectorizer.fit_transform(df_main["infos"])
     similarity = cosine_similarity(Tfidf)
     df_sim = pd.DataFrame(similarity, columns=df_main['title'], index=df_main['title'])
-    
+
     try:
         recomendacoes = df_sim[filme_titulo].sort_values(ascending=False).head(10)
-        
         print(f"Recomendações baseadas no filme '{filme_titulo}':\n")
-        c = 0
-        for filme, similaridade in recomendacoes.items():
-            c += 1
-            print(f"[!] Filme nº{c}:")
+        for i, (filme, similaridade) in enumerate(recomendacoes.items(), start=1):
+            print(f"[!] Filme nº{i}:")
             print(f"- Título: {filme}")
             print(f"- Similaridade: {similaridade:.4f}\n")
     except KeyError:
-        print(f"ERRO: O filme '{filme_titulo}' não está presente na base de dados para recomendação.")    
+        print(f"ERRO: O filme '{filme_titulo}' não está presente na base de dados para recomendação.") 
 
 def pause():
     input("Pressione qualquer tecla para continuar!")
@@ -72,15 +71,15 @@ def pesquisar_filmes(nome_filme, limite=15):
         return df_movies[df_movies['title'].isin(matches)]
     return resultados_substring.values.tolist()
 
-def save_film(user_id, titulo, genero, rating):
+def save_film(user_id, titulo, genero, rating, movie_id):
     conn = sqlite3.connect("login.db")
     cursor = conn.cursor()
     
     cursor.execute("PRAGMA foreign_keys = ON")
     
-    cursor.execute("CREATE TABLE IF NOT EXISTS films (user_id INTEGER NOT NULL,title TEXT NOT NULL,genre TEXT NOT NULL,rating FLOAT NOT NULL,FOREIGN KEY (user_id) REFERENCES user(id))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS films (user_id INTEGER NOT NULL,movie_id Integer NOT NULL,title TEXT NOT NULL,genre TEXT NOT NULL,rating FLOAT NOT NULL,FOREIGN KEY (user_id) REFERENCES user(id))")
     
-    cursor.execute("INSERT INTO films (user_id, title, genre, rating) VALUES (?, ?, ?, ?)", (user_id, titulo, genero, rating))
+    cursor.execute("INSERT INTO films (user_id, movie_id, title, genre, rating) VALUES (?, ?, ?, ?, ?)", (user_id, movie_id, titulo, genero, rating))
     conn.commit()
     conn.close()
 
@@ -109,9 +108,9 @@ def favoritar_filme(user_id):
                         os.system("cls")
                         rating = input(f'Digite a nota do filme "{filme_escolhido[1]}" (1-5): ')
                         try:
-                            rating = float(rating)  # Tenta converter para float
-                            if 1 <= rating <= 5:  # Verifica se está no intervalo
-                                save_film(user_id, filme_escolhido[1], filme_escolhido[2], rating)
+                            rating = float(rating)
+                            if 1 <= rating <= 5:
+                                save_film(user_id, filme_escolhido[1], filme_escolhido[2], rating, filme_escolhido[0])
                                 print("Filme adicionado aos favoritos!")
                                 break
                             else:
@@ -162,7 +161,7 @@ def print_favorites_films():
     table_exists = cursor.fetchone()
 
     if table_exists:
-        cursor.execute("SELECT title, genre FROM films WHERE user_id = ?", (id,))
+        cursor.execute("SELECT movie_id, title, genre FROM films WHERE user_id = ?", (id,))
         retorno = cursor.fetchall()
         if retorno:
             print(f"Filmes favoritos de {usuario}!\n")
@@ -170,8 +169,9 @@ def print_favorites_films():
             for filme in retorno:
                 c+=1
                 print(f"[!]Filme nº{c}:")
-                print(f"-Título: {filme[0]}")
-                print(f"-Gênero: {filme[1]}\n")
+                print(f"-ID: {filme[0]}")
+                print(f"-Título: {filme[1]}")
+                print(f"-Gênero: {filme[2]}\n")
     else:
         print("ERRO: A tabela 'films' não existe!\n")
         pause()
